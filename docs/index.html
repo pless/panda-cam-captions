@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Panda Cam Captions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root{--bg:#eef1f4;--surface:#ffffff;--ink:#1b1f26;--ink2:#5b6470;--rule:#d5dae1;--accent:#2f7d4f;--cam:#b7791f;--camfill:#fbf3e2;--hover:#e4e9ef;color-scheme:light}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#14171b;--surface:#1d2126;--ink:#eef0f3;--ink2:#a7afba;--rule:#2d333b;--accent:#4aa96f;--cam:#d9a441;--camfill:#3a2f18;--hover:#262c34;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#14171b;--surface:#1d2126;--ink:#eef0f3;--ink2:#a7afba;--rule:#2d333b;--accent:#4aa96f;--cam:#d9a441;--camfill:#3a2f18;--hover:#262c34;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",system-ui,sans-serif;font-size:15px;line-height:1.45}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--rule);padding:14px 22px 12px}
+h1{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:24px;margin:0 0 8px;text-wrap:balance}
+.bar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.bar label{display:flex;align-items:center;gap:6px;color:var(--ink2);font-size:14px}
+select,input[type=search]{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:5px 8px}
+input[type=search]{min-width:240px}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.count{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink2);margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;padding:18px 22px 60px}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}
+.card:hover,.card:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.card img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;background:var(--hover)}
+.card .body{padding:9px 11px 11px;display:flex;flex-direction:column;gap:5px;flex:1}
+.cap{font-size:14.5px;line-height:1.35}
+.meta{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink2);display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:auto}
+.chip{display:inline-block;padding:1px 7px;border-radius:10px;border:1px solid var(--rule);font-size:11px;color:var(--ink2)}
+.chip.cam{background:var(--camfill);border-color:var(--cam);color:var(--cam)}
+.chip.src{text-transform:none}
+.empty{grid-column:1/-1;color:var(--ink2);padding:40px 0;text-align:center}
+.more{grid-column:1/-1;text-align:center;padding:10px}
+button{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:7px 14px;cursor:pointer}
+button:hover{background:var(--hover)}
+#overlay{position:fixed;inset:0;background:rgba(10,12,16,.72);z-index:20;display:flex;align-items:center;justify-content:center;padding:24px}
+#overlay[hidden]{display:none}
+.panel{background:var(--surface);color:var(--ink);border-radius:8px;max-width:1100px;width:100%;max-height:92vh;overflow:auto;display:grid;grid-template-columns:minmax(0,3fr) minmax(280px,2fr)}
+.panel img{width:100%;height:auto;display:block;background:#000}
+.detail{padding:18px 20px 22px;display:flex;flex-direction:column;gap:10px}
+.detail h2{font-family:"Source Serif 4",Georgia,serif;font-weight:600;font-size:20px;margin:0;line-height:1.3;text-wrap:balance}
+.detail .desc{white-space:pre-wrap;font-size:14px;color:var(--ink);max-height:38vh;overflow:auto;border-top:1px solid var(--rule);padding-top:10px}
+.detail .kv{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink2);line-height:1.7}
+.detail a{color:var(--accent)}
+.nav{display:flex;gap:8px;margin-top:auto;padding-top:8px}
+@media (max-width:760px){.panel{grid-template-columns:1fr}.detail .desc{max-height:none}}
+@media (prefers-reduced-motion:no-preference){.card{transition:transform .08s}.card:hover{transform:translateY(-1px)}}
+</style></head><body>
+<header>
+<h1>Panda Cam Captions</h1>
+<div class="bar">
+<label>Source <select id="src"><option value="">all</option><option value="youtube">zoo YouTube (title)</option><option value="posts">zoo news images (alt text)</option><option value="news">zoo news figcaptions</option></select></label>
+<label><input type="checkbox" id="cam"> cam frames only</label>
+<label>Year <select id="year"><option value="">all</option></select></label>
+<label>Sort <select id="sort"><option value="date">date</option><option value="score">cam score</option><option value="src">source</option></select></label>
+<input type="search" id="q" placeholder="search captions and descriptions">
+<span class="count" id="count"></span>
+</div>
+</header>
+<div class="grid" id="grid"></div>
+<div id="overlay" hidden><div class="panel" role="dialog" aria-modal="true">
+<img id="oimg" alt=""><div class="detail"><h2 id="ocap"></h2><div class="kv" id="okv"></div><div class="desc" id="odesc"></div>
+<div class="nav"><button id="prev">&larr; previous</button><button id="next">next &rarr;</button><button id="close" style="margin-left:auto">close</button></div></div></div></div>
+<script>
+const SHARDS=6, imgs={}, state={list:[],shown:0,cur:-1};
+let META=[];
+const $=id=>document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function srcName(s){return {youtube:'YouTube',posts:'news image',news:'figcaption'}[s]||s;}
+function filt(){
+  const src=$('src').value, cam=$('cam').checked, yr=$('year').value, q=$('q').value.trim().toLowerCase(), sort=$('sort').value;
+  let L=META.filter(r=>(!src||r.src===src)&&(!cam||r.cam)&&(!yr||String(r.year)===yr)&&(!q||(r.cap+' '+r.desc+' '+r.title).toLowerCase().includes(q)));
+  const dk=r=>r.year? (r.year+'-'+String(r.date)):'0';
+  if(sort==='date') L.sort((a,b)=>(b.year||0)-(a.year||0)||String(b.date).localeCompare(String(a.date)));
+  else if(sort==='score') L.sort((a,b)=>(b.score??-9)-(a.score??-9));
+  else L.sort((a,b)=>a.src.localeCompare(b.src)||(b.year||0)-(a.year||0));
+  state.list=L; state.shown=0; $('grid').innerHTML=''; more();
+  const ncam=L.filter(r=>r.cam).length; $('count').textContent=`${L.length} pairs \u00b7 ${ncam} cam`;
+}
+function card(r){
+  const d=document.createElement('div'); d.className='card'; d.tabIndex=0; d.dataset.i=r.i;
+  d.innerHTML=`<img alt="" src="${imgs[r.i]||''}"><div class="body"><div class="cap">${esc(r.cap)}</div><div class="meta"><span class="chip src">${srcName(r.src)}</span>${r.cam?'<span class="chip cam">cam</span>':''}<span>${esc(r.date||'')}</span>${r.score!=null?`<span>${r.score>=0?'+':''}${r.score.toFixed(3)}</span>`:''}</div></div>`;
+  d.addEventListener('click',()=>open(state.list.indexOf(r))); d.addEventListener('keydown',e=>{if(e.key==='Enter')open(state.list.indexOf(r));});
+  return d;
+}
+function more(){
+  const g=$('grid'); const old=g.querySelector('.more'); if(old) old.remove();
+  const end=Math.min(state.list.length,state.shown+120);
+  for(let k=state.shown;k<end;k++) g.appendChild(card(state.list[k]));
+  state.shown=end;
+  if(!state.list.length){g.innerHTML='<div class="empty">No pairs match these filters.</div>';return;}
+  if(end<state.list.length){const m=document.createElement('div');m.className='more';m.innerHTML=`<button>show more (${state.list.length-end} left)</button>`;m.querySelector('button').onclick=more;g.appendChild(m);}
+}
+function open(k){
+  if(k<0||k>=state.list.length) return; state.cur=k; const r=state.list[k];
+  $('oimg').src=imgs[r.i]||''; $('ocap').textContent=r.cap;
+  $('okv').innerHTML=`${srcName(r.src)} \u00b7 ${esc(r.kind)}${r.cam?' \u00b7 <span class="chip cam">cam</span>':''}<br>${esc(r.date||'no date')}${r.score!=null?` \u00b7 cam score ${r.score>=0?'+':''}${r.score.toFixed(3)}`:''}<br>original ${r.w}&times;${r.h} \u00b7 <a href="${esc(r.url)}" target="_blank" rel="noopener">source page</a>${r.title&&r.title!==r.cap?`<br>post: ${esc(r.title)}`:''}`;
+  $('odesc').textContent=r.desc||''; $('odesc').hidden=!r.desc; $('overlay').hidden=false; $('prev').disabled=k===0; $('next').disabled=k===state.list.length-1;
+}
+$('close').onclick=()=>{$('overlay').hidden=true;}; $('overlay').addEventListener('click',e=>{if(e.target===$('overlay'))$('overlay').hidden=true;});
+$('prev').onclick=()=>open(state.cur-1); $('next').onclick=()=>open(state.cur+1);
+document.addEventListener('keydown',e=>{if($('overlay').hidden)return; if(e.key==='Escape')$('overlay').hidden=true; if(e.key==='ArrowLeft')open(state.cur-1); if(e.key==='ArrowRight')open(state.cur+1);});
+['src','cam','year','sort'].forEach(id=>$(id).addEventListener('change',filt)); $('q').addEventListener('input',filt);
+async function load(){
+  META=await (await fetch('meta.json')).json();
+  const yrs=[...new Set(META.map(r=>r.year).filter(Boolean))].sort((a,b)=>b-a); yrs.forEach(y=>{const o=document.createElement('option');o.value=y;o.textContent=y;$('year').appendChild(o);});
+  filt();
+  for(let s=0;s<SHARDS;s++){ const d=await (await fetch(`img${s}.json`)).json(); Object.assign(imgs,d);
+    document.querySelectorAll('.card').forEach(c=>{const i=c.dataset.i; const im=c.querySelector('img'); if(!im.getAttribute('src')&&imgs[i]) im.src=imgs[i];});
+    if(state.cur>=0){const r=state.list[state.cur]; if(!$('oimg').getAttribute('src')&&imgs[r.i]) $('oimg').src=imgs[r.i];}
+  }
+}
+load();
+</script>
+
+</body></html>
